@@ -62,11 +62,31 @@ lvl.ai/
 
 ### Prerequisites
 
-- Node.js 18.0.0 or higher
-- MongoDB 4.4 or higher
-- npm or yarn package manager
+- **Node.js** 18.0.0 or higher ([Download](https://nodejs.org/))
+- **MongoDB** 4.4 or higher ([Download](https://www.mongodb.com/try/download/community) or use [Docker](https://www.docker.com/))
+- **npm** (comes with Node.js) or **yarn** package manager
 
-### Installation
+> **Note**: This is a Node.js/TypeScript project. No Python virtual environment (venv) is needed.
+
+### Quick Setup (Automated)
+
+Run the setup script to automatically configure the project:
+
+```bash
+# Make setup script executable (if needed)
+chmod +x setup.sh
+
+# Run setup
+./setup.sh
+```
+
+The setup script will:
+- ✅ Check Node.js version
+- ✅ Install backend and frontend dependencies
+- ✅ Create `.env` files from `.env.example` templates
+- ✅ Provide next steps
+
+### Manual Installation
 
 1. **Clone the repository**
    ```bash
@@ -83,43 +103,72 @@ lvl.ai/
    # Frontend
    cd ../frontend
    npm install
-   
-   # Hotel Dashboard
-   cd ../hotel-dashboard
-   npm install
    ```
 
 3. **Set up environment variables**
 
-   **Backend** (`backend/.env`):
+   **Backend** - Copy the example file and update values:
+   ```bash
+   cd backend
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+   
+   Required variables in `backend/.env`:
    ```bash
    NODE_ENV=development
    PORT=5001
    MONGODB_URI=mongodb://localhost:27017/lvl-ai
-   JWT_ACCESS_TOKEN_SECRET=your_jwt_secret_here
-   JWT_EXPIRE=7d
+   JWT_ACCESS_TOKEN_SECRET=your_jwt_secret_here  # Generate a secure random string
+   JWT_SECRET=your_jwt_secret_here               # Generate a secure random string
+   CORS_ORIGIN=http://localhost:3000
+   
+   # Optional: For AI features
    OPENROUTER_API_KEY=your_openrouter_api_key
    DEEPSEEK_API_KEY=your_deepseek_api_key
+   
+   # Optional: For email features (password reset, verification)
    EMAIL_HOST=smtp.gmail.com
    EMAIL_PORT=587
    EMAIL_USER=your_email@gmail.com
    EMAIL_PASS=your_app_password
-   CORS_ORIGIN=http://localhost:3000
    ```
 
-   **Frontend** (`frontend/.env.local`):
+   **Frontend** - Copy the example file:
+   ```bash
+   cd frontend
+   cp .env.example .env.local
+   # Edit .env.local if needed (default should work)
+   ```
+   
+   Required variables in `frontend/.env.local`:
    ```bash
    NEXT_PUBLIC_API_URL=http://localhost:5001/api
    ```
 
 4. **Start MongoDB**
+   
+   **Option 1: Using MongoDB service**
    ```bash
-   # Using MongoDB service
+   # macOS (Homebrew)
+   brew services start mongodb-community
+   
+   # Linux
    sudo systemctl start mongod
    
-   # Or using Docker
+   # Windows
+   net start MongoDB
+   ```
+   
+   **Option 2: Using Docker** (Recommended for development)
+   ```bash
    docker run -d -p 27017:27017 --name mongodb mongo:latest
    ```
+   
+   **Option 3: MongoDB Atlas** (Cloud - Free tier available)
+   - Sign up at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+   - Create a cluster and get your connection string
+   - Update `MONGODB_URI` in `backend/.env`
 
 5. **Run the applications**
 
@@ -128,23 +177,19 @@ lvl.ai/
    cd backend
    npm run dev
    ```
+   The backend will start on `http://localhost:5001`
 
    **Frontend** (Terminal 2):
    ```bash
    cd frontend
    npm run dev
    ```
-
-   **Hotel Dashboard** (Terminal 3):
-   ```bash
-   cd hotel-dashboard
-   npm run dev
-   ```
+   The frontend will start on `http://localhost:3000`
 
 6. **Access the applications**
-   - Main Application: http://localhost:3000
-   - Backend API: http://localhost:5001
-   - Hotel Dashboard: http://localhost:3001
+   - **Frontend Application**: http://localhost:3000
+   - **Backend API**: http://localhost:5001
+   - **API Health Check**: http://localhost:5001/health
 
 ## 📚 API Documentation
 

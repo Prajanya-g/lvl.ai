@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -9,6 +9,9 @@ import ClientGuard from '@/components/ClientGuard';
 import { TaskCompletionGraph } from '@/components/home';
 import { Calendar } from '@/components/charts/calender';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiClient } from '@/lib/api/client';
+import { UserAPI } from '@/lib/api/users';
+import { Task } from '@/lib/types';
 import { 
   ChartBarIcon, 
   ClockIcon, 
@@ -18,29 +21,119 @@ import {
   TrophyIcon
 } from '@heroicons/react/24/outline';
 
+interface DashboardStats {
+  totalTasks: number;
+  completedToday: number;
+  overdueTasks: number;
+  currentStreak: number;
+}
+
 export default function DashboardPage() {
-  const { user } = useAuth();
-  
-  // Mock data - in real app, this would come from API
-  const stats = [
-    { name: 'Total Tasks', value: '24', change: '+4', changeType: 'positive' },
-    { name: 'Completed Today', value: '8', change: '+2', changeType: 'positive' },
-    { name: 'Overdue Tasks', value: '3', change: '-1', changeType: 'negative' },
-    { name: 'Current Streak', value: '12 days', change: '+1', changeType: 'positive' },
-  ];
+  const { user, loading: authLoading } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats>({
+    totalTasks: 0,
+    completedToday: 0,
+    overdueTasks: 0,
+    currentStreak: 0,
+  });
+  const [recentTasks, setRecentTasks] = useState<Task[]>([]);
+  const [userStats, setUserStats] = useState<{ level: number; xp: number; totalTasksCompleted: number } | null>(null);
 
-  const recentTasks = [
-    { id: 1, title: 'Complete project proposal', priority: 'high', status: 'in_progress', dueDate: '2024-01-15' },
-    { id: 2, title: 'Grocery shopping', priority: 'medium', status: 'pending', dueDate: '2024-01-14' },
-    { id: 3, title: 'Morning workout', priority: 'high', status: 'completed', dueDate: '2024-01-13' },
-    { id: 4, title: 'Team meeting prep', priority: 'urgent', status: 'pending', dueDate: '2024-01-14' },
-  ];
+  useEffect(() => {
+    if (authLoading) return;
 
-  const achievements = [
-    { name: 'Early Bird', description: 'Complete 5 tasks before 9 AM', progress: 3, target: 5 },
-    { name: 'Consistency King', description: 'Maintain 7-day streak', progress: 7, target: 7 },
-    { name: 'Task Master', description: 'Complete 50 tasks', progress: 42, target: 50 },
-  ];
+    const fetchDashboardData = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const userId = user._id || (user as any).id;
+
+        // Fetch task stats
+        const taskStats = await apiClient.getTaskStats(30);
+        
+        // Fetch user stats
+        const userStatsData = await UserAPI.getUserStats(userId);
+        
+        // Fetch recent tasks (last 5)
+        const tasksResponse = await apiClient.getTasks({}, { field: 'createdAt', direction: 'desc' }, 1, 5);
+        const tasks: Task[] = (tasksResponse.data || []).map(task => ({
+          ...task,
+          taskTime: task.taskTime ? new Date(task.taskTime) : undefined,
+          dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+          completedAt: task.completedAt ? new Date(task.completedAt) : undefined,
+          createdAt: new Date(task.createdAt),
+          updatedAt: new Date(task.updatedAt),
+        }));
+
+        // Calculate completed today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const completedToday = tasks.filter(task => {
+          if (task.status !== 'completed' || !task.completedAt) return false;
+          const completedDate = new Date(task.completedAt);
+          completedDate.setHours(0, 0, 0, 0);
+          return completedDate.getTime() === today.getTime();
+        }).length;
+
+        // Update stats
+        setStats({
+          totalTasks: taskStats.totalTasks,
+          completedToday,
+          overdueTasks: taskStats.overdue,
+          currentStreak: 0, // TODO: Calculate streak from task completion history
+        });
+
+        setRecentTasks(tasks);
+        if (userStatsData.data) {
+          setUserStats({
+            level: userStatsData.data.level,
+            xp: userStatsData.data.xp,
+            totalTasksCompleted: userStatsData.data.totalTasksCompleted,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        // Keep default/empty stats on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [user, authLoading]);
+
+  const handleViewTasks = () => {
+    if (typeof globalThis.window !== 'undefined') {
+      globalThis.window.location.href = '/tasks';
+    }
+  };
+
+  // Calculate achievements based on real data
+  const achievements = userStats ? [
+    { 
+      name: 'Task Master', 
+      description: 'Complete 50 tasks', 
+      progress: userStats.totalTasksCompleted, 
+      target: 50 
+    },
+    { 
+      name: 'Level Up', 
+      description: 'Reach level 10', 
+      progress: userStats.level, 
+      target: 10 
+    },
+    { 
+      name: 'XP Collector', 
+      description: 'Earn 1000 XP', 
+      progress: Math.min(userStats.xp, 1000), 
+      target: 1000 
+    },
+  ] : [];
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -80,28 +173,65 @@ export default function DashboardPage() {
           <Calendar />
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {stats.map((stat) => (
-              <Card key={stat.name}>
+          {loading ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Card key={i}>
+                  <CardContent className="p-6">
+                    <div className="animate-pulse">
+                      <div className="h-4 bg-muted rounded w-24 mb-2"></div>
+                      <div className="h-8 bg-muted rounded w-16"></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-muted-foreground">{stat.name}</p>
-                      <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                    </div>
-                    <div className="flex items-center">
-                      <Badge 
-                        variant={stat.changeType === 'positive' ? 'success' : 'error'}
-                        size="sm"
-                      >
-                        {stat.change}
-                      </Badge>
+                      <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
+                      <p className="text-2xl font-bold text-foreground">{stats.totalTasks}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground">Completed Today</p>
+                      <p className="text-2xl font-bold text-foreground">{stats.completedToday}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground">Overdue Tasks</p>
+                      <p className="text-2xl font-bold text-foreground">{stats.overdueTasks}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground">Level</p>
+                      <p className="text-2xl font-bold text-foreground">
+                        {userStats ? `Lv. ${userStats.level}` : 'Lv. 1'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Recent Tasks */}
@@ -114,23 +244,40 @@ export default function DashboardPage() {
                 <CardDescription>Your latest task activity</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {recentTasks.map((task) => (
-                    <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border">
-                      <div className="flex items-center gap-3">
-                        {getStatusIcon(task.status)}
-                        <div>
-                          <p className="font-medium text-foreground">{task.title}</p>
-                          <p className="text-sm text-muted-foreground">Due: {task.dueDate}</p>
-                        </div>
+                {loading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="animate-pulse p-3 rounded-lg border">
+                        <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-muted rounded w-1/2"></div>
                       </div>
-                          <Badge variant={getPriorityColor(task.priority) as 'default' | 'secondary' | 'warning' | 'error'} size="sm">
-                        {task.priority}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="outline" className="w-full mt-4">
+                    ))}
+                  </div>
+                ) : recentTasks.length > 0 ? (
+                  <div className="space-y-4">
+                    {recentTasks.map((task) => (
+                      <div key={task._id} className="flex items-center justify-between p-3 rounded-lg border">
+                        <div className="flex items-center gap-3">
+                          {getStatusIcon(task.status)}
+                          <div>
+                            <p className="font-medium text-foreground">{task.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {task.dueDate ? `Due: ${new Date(task.dueDate).toLocaleDateString()}` : 'No due date'}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant={getPriorityColor(task.priority)} size="sm">
+                          {task.priority}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No tasks yet. Create your first task to get started!</p>
+                  </div>
+                )}
+                <Button variant="outline" className="w-full mt-4" onClick={handleViewTasks}>
                   View All Tasks
                 </Button>
               </CardContent>
@@ -146,25 +293,40 @@ export default function DashboardPage() {
                 <CardDescription>Track your progress and unlock rewards</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {achievements.map((achievement, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-foreground">{achievement.name}</h4>
-                        <span className="text-sm text-muted-foreground">
-                          {achievement.progress}/{achievement.target}
-                        </span>
+                {loading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="space-y-2">
+                        <div className="animate-pulse h-4 bg-muted rounded w-3/4 mb-2"></div>
+                        <div className="animate-pulse h-2 bg-muted rounded w-full"></div>
                       </div>
-                      <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                      <div className="w-full bg-secondary rounded-full h-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${(achievement.progress / achievement.target) * 100}%` }}
-                        />
+                    ))}
+                  </div>
+                ) : achievements.length > 0 ? (
+                  <div className="space-y-4">
+                    {achievements.map((achievement) => (
+                      <div key={achievement.name} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium text-foreground">{achievement.name}</h4>
+                          <span className="text-sm text-muted-foreground">
+                            {achievement.progress}/{achievement.target}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{achievement.description}</p>
+                        <div className="w-full bg-secondary rounded-full h-2">
+                          <div 
+                            className="bg-primary h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${Math.min((achievement.progress / achievement.target) * 100, 100)}%` }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Complete tasks to unlock achievements!</p>
+                  </div>
+                )}
                 <Button variant="outline" className="w-full mt-4">
                   View All Achievements
                 </Button>

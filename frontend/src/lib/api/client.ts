@@ -252,10 +252,10 @@ class ApiClient {
 
   async getTaskStats(period?: number): Promise<{
     totalTasks: number;
-    byType: Record<string, number>;
     byStatus: Record<string, number>;
     byPriority: Record<string, number>;
-    totalXP: number;
+    totalPoints: number;
+    earnedPoints: number;
     overdue: number;
   }> {
     const params = new URLSearchParams();

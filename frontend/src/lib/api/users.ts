@@ -237,6 +237,37 @@ export class UserAPI {
     throw new Error(response.data.message || 'Failed to add metric');
   }
 
+  // @route   GET /api/users/:id/stats
+  // @desc    Get user stats (level, XP, task counts)
+  // @access  Private
+  static async getUserStats(userId: string): Promise<ApiResponse<{
+    level: number;
+    xp: number;
+    totalTasksCompleted: number;
+    tasks: {
+      total: number;
+      completed: number;
+      pending: number;
+      inProgress: number;
+    };
+  }>> {
+    const response: AxiosResponse<ApiResponse<{
+      level: number;
+      xp: number;
+      totalTasksCompleted: number;
+      tasks: {
+        total: number;
+        completed: number;
+        pending: number;
+        inProgress: number;
+      };
+    }>> = await apiClient.client.get(`/users/${userId}/stats`);
+    if (response.data.success && response.data.data) {
+      return response.data;
+    }
+    throw new Error(response.data.message || 'Failed to fetch user stats');
+  }
+
   // @route   GET /api/users/:id/levels
   // @desc    Get user levels
   static async getUserLevels(userId: string): Promise<Record<string, LevelProgress>> {

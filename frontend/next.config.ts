@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  outputFileTracingRoot: '/Users/boncui/Desktop/Projects/lvl.ai/frontend',
+  // Minimal config - add settings here as needed
 };
 
 export default nextConfig;
