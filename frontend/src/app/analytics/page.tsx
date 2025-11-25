@@ -377,8 +377,8 @@ export default function AnalyticsPage() {
             </div>
           )}
 
-          {/* Player Card */}
-          <div className="flex items-center justify-center mb-8">
+          {/* Player Card - Hero Section */}
+          <div className="flex items-center justify-center mb-12">
             <PlayerCard 
               user={user}
               stats={userStats}
@@ -386,149 +386,103 @@ export default function AnalyticsPage() {
             />
           </div>
 
-          {/* Metrics Cards */}
-          {metrics && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 max-w-4xl mx-auto">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <CheckCircleIcon className="h-4 w-4" />
-                    Completion Rate
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-foreground">{metrics.completionRate}%</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {taskStats?.byStatus.completed || 0} of {taskStats?.totalTasks || 0} tasks completed
-                  </p>
-                </CardContent>
-              </Card>
+          {/* Quick Stats Overview */}
+          <div className="max-w-6xl mx-auto mb-12">
+            <h2 className="text-2xl font-bold text-foreground mb-6">Quick Overview</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {metrics && (
+                <>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <CheckCircleIcon className="h-4 w-4" />
+                        Completion Rate
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-foreground">{metrics.completionRate}%</div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {taskStats?.byStatus.completed || 0} / {taskStats?.totalTasks || 0} tasks
+                      </p>
+                    </CardContent>
+                  </Card>
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <TrophyIcon className="h-4 w-4" />
-                    Points Efficiency
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-foreground">{metrics.pointsEfficiency}%</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {taskStats?.earnedPoints || 0} / {taskStats?.totalPoints || 0} points earned
-                  </p>
-                </CardContent>
-              </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <TrophyIcon className="h-4 w-4" />
+                        Points Efficiency
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-foreground">{metrics.pointsEfficiency}%</div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {taskStats?.earnedPoints || 0} / {taskStats?.totalPoints || 0} points
+                      </p>
+                    </CardContent>
+                  </Card>
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <ChartBarIcon className="h-4 w-4" />
-                    Avg Points/Task
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-foreground">{metrics.avgPointsPerTask}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Average points per task
-                  </p>
-                </CardContent>
-              </Card>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <ChartBarIcon className="h-4 w-4" />
+                        Avg Points
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-foreground">{metrics.avgPointsPerTask}</div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Per task
+                      </p>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+
+              {taskStats && (
+                <>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <ExclamationTriangleIcon className="h-4 w-4 text-warning" />
+                        Overdue
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-warning">{taskStats.overdue}</div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Tasks past due
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <FireIcon className="h-4 w-4 text-primary" />
+                        Total Points
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-primary">{taskStats.totalPoints}</div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {taskStats.earnedPoints} earned
+                      </p>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
             </div>
-          )}
+          </div>
 
-          {/* Charts Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto mb-8">
-            {/* Task Status Distribution */}
-            {statusChartData.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Task Status Distribution</CardTitle>
-                  <CardDescription>Breakdown of tasks by status</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <FoodOrdersPieChart
-                    data={statusChartData}
-                    colors={['#10b981', '#f59e0b', '#3b82f6', '#ef4444']}
-                    height={250}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Priority Distribution */}
-            {priorityChartData.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Priority Distribution</CardTitle>
-                  <CardDescription>Tasks grouped by priority level</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <RevenueBarChart
-                    data={priorityChartData}
-                    color="#0ea5e9"
-                    height={250}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Tag/Category Breakdown */}
-            {tagChartData.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Top Categories</CardTitle>
-                  <CardDescription>Most used tags/categories</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <FoodOrdersPieChart
-                    data={tagChartData}
-                    colors={['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#06b6d4', '#84cc16']}
-                    height={250}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* XP Earned Over Time */}
-            {xpTrendData.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>XP Earned (30 Days)</CardTitle>
-                  <CardDescription>Points earned per day</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <GuestsLineChart
-                    data={xpTrendData}
-                    color="#f59e0b"
-                    height={250}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Weekly Completion Trend */}
-            {weeklyTrendData.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Weekly Completion Trend</CardTitle>
-                  <CardDescription>Tasks completed over the last 7 days</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <GuestsLineChart
-                    data={weeklyTrendData}
-                    color="#10b981"
-                    height={250}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Task Velocity (Creation vs Completion) */}
-            <Card className="lg:col-span-2">
+          {/* Task Velocity - Highlight Section */}
+          <div className="max-w-6xl mx-auto mb-12">
+            <h2 className="text-2xl font-bold text-foreground mb-6">Task Velocity</h2>
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div>
-                    <div>Task Velocity (4 Weeks)</div>
+                    <div>4-Week Performance</div>
                     <CardDescription className="mt-1">
                       Tasks created vs completed per week
                     </CardDescription>
@@ -573,7 +527,7 @@ export default function AnalyticsPage() {
                         booked: '#3b82f6',
                         available: '#f59e0b',
                       }}
-                      height={250}
+                      height={300}
                     />
                     {velocityMetrics && (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
@@ -609,40 +563,102 @@ export default function AnalyticsPage() {
             </Card>
           </div>
 
-          {/* Additional Stats */}
-          {taskStats && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ExclamationTriangleIcon className="h-5 w-5 text-warning" />
-                    Overdue Tasks
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-4xl font-bold text-warning">{taskStats.overdue}</div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Tasks that are past their due date
-                  </p>
-                </CardContent>
-              </Card>
+          {/* Trends & Patterns */}
+          <div className="max-w-6xl mx-auto mb-12">
+            <h2 className="text-2xl font-bold text-foreground mb-6">Trends & Patterns</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* XP Earned Over Time */}
+              {xpTrendData.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>XP Earned (30 Days)</CardTitle>
+                    <CardDescription>Points earned per day over the last month</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <GuestsLineChart
+                      data={xpTrendData}
+                      color="#f59e0b"
+                      height={250}
+                    />
+                  </CardContent>
+                </Card>
+              )}
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FireIcon className="h-5 w-5 text-primary" />
-                    Total Points Available
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-4xl font-bold text-primary">{taskStats.totalPoints}</div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {taskStats.earnedPoints} points earned ({metrics?.pointsEfficiency || 0}%)
-                  </p>
-                </CardContent>
-              </Card>
+              {/* Weekly Completion Trend */}
+              {weeklyTrendData.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Weekly Completion Trend</CardTitle>
+                    <CardDescription>Tasks completed over the last 7 days</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <GuestsLineChart
+                      data={weeklyTrendData}
+                      color="#10b981"
+                      height={250}
+                    />
+                  </CardContent>
+                </Card>
+              )}
             </div>
-          )}
+          </div>
+
+          {/* Distribution Analysis */}
+          <div className="max-w-6xl mx-auto mb-12">
+            <h2 className="text-2xl font-bold text-foreground mb-6">Distribution Analysis</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Task Status Distribution */}
+              {statusChartData.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Task Status</CardTitle>
+                    <CardDescription>Breakdown by status</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <FoodOrdersPieChart
+                      data={statusChartData}
+                      colors={['#10b981', '#f59e0b', '#3b82f6', '#ef4444']}
+                      height={250}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Priority Distribution */}
+              {priorityChartData.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Priority Levels</CardTitle>
+                    <CardDescription>Tasks by priority</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <RevenueBarChart
+                      data={priorityChartData}
+                      color="#0ea5e9"
+                      height={250}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Tag/Category Breakdown */}
+              {tagChartData.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Top Categories</CardTitle>
+                    <CardDescription>Most used tags</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <FoodOrdersPieChart
+                      data={tagChartData}
+                      colors={['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#06b6d4', '#84cc16']}
+                      height={250}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
         </div>
       </Sidebar>
     </ClientGuard>
